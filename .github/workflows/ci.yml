@@ -1,0 +1,42 @@
+name: ci
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install numpy pytest jsonschema
+      # the core needs neither torch nor a model download
+      - run: pytest -q
+
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - run: pip install -r requirements-dev.txt
+      - run: python bench/benchmark.py --json results/ci.json
+      # the trie masker must stay bit-identical to brute force, and the cache
+      # must keep paying for itself
+      - name: masker still correct and still fast
+        run: |
+          python - <<'PY'
+          import json
+          r = json.load(open("results/ci.json"))
+          assert all(m["identical"] for m in r["masking"]), r["masking"]
+          off, on = r["cache"][0]["mask_ms_total"], r["cache"][1]["mask_ms_total"]
+          assert off / on > 10, f"cache speedup collapsed: {off/on:.1f}x"
+          assert all(c["parses"] for c in r["coverage"]), r["coverage"]
+          print(f"ok — cache speedup {off/on:.0f}x")
+          PY

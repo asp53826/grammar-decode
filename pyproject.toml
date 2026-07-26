@@ -1,0 +1,16 @@
+[project]
+name = "grammar-decode"
+version = "0.1.0"
+description = "Constrained decoding: JSON Schema compiled to a token mask over the vocabulary"
+requires-python = ">=3.11"
+dependencies = ["numpy>=1.26"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["gd*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
