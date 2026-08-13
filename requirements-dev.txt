@@ -1,5 +1,5 @@
 -r requirements.txt
 pytest>=8.0
-jsonschema>=4.20
+jsonschema>=4.26.0
 transformers>=4.40
 torch>=2.2
